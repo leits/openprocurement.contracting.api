@@ -142,6 +142,8 @@ class ContractingDataBridge(object):
                 delay = self.full_stack_sync_delay
                 logger.info("Client {} params: {}".format(direction, params))
             for tender in tenders_list:
+                if any(method == tender['procurementMethodType'] for method in ('competitiveDialogueUA', 'competitiveDialogueEU')):
++                    continue
                 if tender['status'] in ("active.qualification",
                                         "active.awarded", "complete"):
                     if hasattr(tender, "lots"):
@@ -323,7 +325,7 @@ class ContractingDataBridge(object):
 
     def get_tender_contracts_forward(self):
         logger.info('Start forward data sync worker...')
-        params = {'opt_fields': 'status,lots', 'mode': '_all_'}
+        params = {'opt_fields': 'status,lots,procurementMethodType', 'mode': '_all_'}
         try:
             for tender_data in self.get_tenders(params=params, direction="forward"):
                 logger.info('Forward sync: Put tender {} to process...'.format(tender_data['id']),
@@ -338,7 +340,7 @@ class ContractingDataBridge(object):
 
     def get_tender_contracts_backward(self):
         logger.info('Start backward data sync worker...')
-        params = {'opt_fields': 'status,lots', 'descending': 1, 'mode': '_all_'}
+        params = {'opt_fields': 'status,lots,procurementMethodType', 'descending': 1, 'mode': '_all_'}
         try:
             for tender_data in self.get_tenders(params=params, direction="backward"):
                 stored = db.get(tender_data['id'])
